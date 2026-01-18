@@ -154,14 +154,32 @@
 
 <body class="bg-bg-primary text-text-primary font-body overflow-x-hidden">
 
+     <!-- Background Audio -->
+     <audio id="background-audio" loop preload="metadata">
+        <source src="https://res.cloudinary.com/dvgwv9urt/video/upload/v1768737940/IMG_6948_n6zcme.mp3" type="audio/mpeg">
+        Your browser does not support the audio tag.
+    </audio>
+
+    <!-- Audio Control Button -->
+    <button id="audio-toggle" class="fixed bottom-6 right-6 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-3 rounded-full transition-all duration-200 z-[100] shadow-lg border border-white border-opacity-20">
+        <svg id="volume-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- Volume on icon -->
+            <path id="volume-on" d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"></path>
+            <!-- Volume off icon (hidden by default) -->
+            <path id="volume-off" d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" class="hidden"></path>
+        </svg>
+    </button>
+
     <!-- Phase 1: Entry Video Gate -->
     <div id="entry-video-gate"
         class="wedding-video-gate fixed inset-0 flex items-center justify-center bg-black z-[100] cursor-pointer">
         <video id="entry-video" class="w-full h-full object-cover" playsinline preload="metadata">
-            <source src="https://res.cloudinary.com/dvgwv9urt/video/upload/v1768730194/Best_Wedding_Invite_teykwj.mp4" type="video/mp4">
+            <source src="https://res.cloudinary.com/dvgwv9urt/video/upload/v1768738026/Best_Wedding_Invite_3_dtwtmy.mp4" type="video/mp4">
             Your browser does not support the video tag.
         </video>
-      
+
+       
+
     </div>
 
     <!-- Phase 2: Main Website Content -->
@@ -380,15 +398,41 @@
         // Entry Video Gate Logic
         const entryVideoGate = document.getElementById('entry-video-gate');
         const entryVideo = document.getElementById('entry-video');
+        const backgroundAudio = document.getElementById('background-audio');
+        const audioToggle = document.getElementById('audio-toggle');
+        const volumeOn = document.getElementById('volume-on');
+        const volumeOff = document.getElementById('volume-off');
         const mainContent = document.getElementById('main-content');
+
+        // Audio toggle functionality
+        let isMuted = false;
+        audioToggle.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent triggering video play/pause
+            isMuted = !isMuted;
+
+            if (isMuted) {
+                backgroundAudio.volume = 0;
+                volumeOn.classList.add('hidden');
+                volumeOff.classList.remove('hidden');
+            } else {
+                backgroundAudio.volume = 1;
+                volumeOn.classList.remove('hidden');
+                volumeOff.classList.add('hidden');
+            }
+        });
 
         entryVideoGate.addEventListener('click', () => {
             if (entryVideo.paused) {
+                // Start both video and audio
                 entryVideo.play().catch(error => {
                     console.error("Video play failed:", error);
                 });
+                backgroundAudio.play().catch(error => {
+                    console.error("Audio play failed:", error);
+                });
             } else {
                 entryVideo.pause();
+                // Audio continues playing - don't pause it
             }
         });
 
