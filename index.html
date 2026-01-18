@@ -549,6 +549,29 @@
             }
         });
 
+        // Attendance selection handler
+        const attendingSelect = document.getElementById('attending');
+        const guestsInput = document.getElementById('guests');
+
+        attendingSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'no') {
+                // Regrettably decline - set guests to 0 and disable field
+                guestsInput.value = '0';
+                guestsInput.disabled = true;
+                guestsInput.required = false;
+                guestsInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+            } else if (e.target.value === 'yes') {
+                // Joyfully accept - enable guests field
+                guestsInput.disabled = false;
+                guestsInput.required = true;
+                guestsInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                // Set default value if it's still 0
+                if (guestsInput.value === '0') {
+                    guestsInput.value = '1';
+                }
+            }
+        });
+
         // RSVP Form Submission
         document.getElementById("rsvpForm").addEventListener("submit", async (e) => {
             e.preventDefault();
@@ -557,6 +580,11 @@
 
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData.entries());
+
+            // Handle declined RSVP - ensure guests is 0
+            if (data.attending === 'no') {
+                data.guests = '0';
+            }
 
             // Add clientId for dynamic sheet lookup
             data.clientId = "preetha-saroop-wedding-2026"; // TODO: Replace with actual client ID
