@@ -161,7 +161,7 @@
     </audio>
 
     <!-- Audio Control Button -->
-    <button id="audio-toggle" class="fixed bottom-6 right-6 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-3 rounded-full transition-all duration-200 z-[100] shadow-lg border border-white border-opacity-20">
+    <button id="audio-toggle" class="fixed bottom-6 right-6 bg-black bg-opacity-30 hover:bg-opacity-80 hover:bg-black hover:scale-110 text-white p-3 rounded-full transition-all duration-300 z-[100] shadow-md hover:shadow-xl border border-white border-opacity-10 hover:border-opacity-30 backdrop-blur-sm opacity-60 hover:opacity-100">
         <svg id="volume-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <!-- Volume on icon -->
             <path id="volume-on" d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"></path>
@@ -408,6 +408,15 @@
         let isMuted = false;
         audioToggle.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent triggering video play/pause
+
+            // Make button temporarily prominent
+            audioToggle.style.opacity = '1';
+
+            // Reset to subtle state after 2 seconds
+            setTimeout(() => {
+                audioToggle.style.opacity = '0.4';
+            }, 2000);
+
             isMuted = !isMuted;
 
             if (isMuted) {
