@@ -100,6 +100,18 @@
             z-index: -1;
         }
 
+        /* Pulse animation for audio button feedback */
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.6;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+        }
+
         /* Timeline styles */
         .timeline-item {
             position: relative;
@@ -155,9 +167,10 @@
 <body class="bg-bg-primary text-text-primary font-body overflow-x-hidden">
 
      <!-- Background Audio -->
-     <audio id="background-audio" loop preload="metadata">
+     <audio id="background-audio" loop preload="metadata" playsinline>
         <source src="https://res.cloudinary.com/dvgwv9urt/video/upload/v1768844295/WhatsApp_Audio_2026-01-19_at_22.18.01_nnrt5i.mp3" type="audio/mpeg">
-        Your browser does not support the audio tag.
+        <!-- Fallback for browsers that don't support audio -->
+        <p>Your browser does not support the audio tag. Please try a different browser to enjoy background music.</p>
     </audio>
 
     <!-- Audio Control Button -->
@@ -413,7 +426,29 @@
 
         // Audio toggle functionality
         let isMuted = false;
-        audioToggle.addEventListener('click', (e) => {
+        let audioStarted = false;
+
+        // Function to start audio with iOS compatibility
+        async function startAudio() {
+            if (!audioStarted) {
+                try {
+                    await backgroundAudio.play();
+                    audioStarted = true;
+                    console.log("Audio started successfully");
+                } catch (error) {
+                    console.error("Audio play failed:", error);
+                    // On iOS and other mobile devices, this is often expected
+                    // Audio will start on next user interaction (like clicking audio toggle)
+                    // Show subtle visual feedback that audio needs user interaction
+                    audioToggle.style.animation = 'pulse 1s ease-in-out 2';
+                    setTimeout(() => {
+                        audioToggle.style.animation = '';
+                    }, 2000);
+                }
+            }
+        }
+
+        audioToggle.addEventListener('click', async (e) => {
             e.stopPropagation(); // Prevent triggering video play/pause
 
             // Make button temporarily prominent
@@ -421,30 +456,37 @@
 
             // Reset to subtle state after 2 seconds
             setTimeout(() => {
-                audioToggle.style.opacity = '0.4';
+                audioToggle.style.opacity = '0.6';
             }, 2000);
+
+            // Start audio if not started yet (for iOS compatibility)
+            if (!audioStarted) {
+                await startAudio();
+            }
 
             isMuted = !isMuted;
 
             if (isMuted) {
-                backgroundAudio.volume = 0;
+                backgroundAudio.muted = true;
                 volumeOn.classList.add('hidden');
                 volumeOff.classList.remove('hidden');
             } else {
-                backgroundAudio.volume = 1;
+                backgroundAudio.muted = false;
                 volumeOn.classList.remove('hidden');
                 volumeOff.classList.add('hidden');
             }
         });
 
-        entryVideoGate.addEventListener('click', () => {
+        entryVideoGate.addEventListener('click', async () => {
             if (entryVideo.paused) {
-                // Start both video and audio
+                // Start audio first (important for iOS)
+                if (!audioStarted) {
+                    await startAudio();
+                }
+
+                // Then start video
                 entryVideo.play().catch(error => {
                     console.error("Video play failed:", error);
-                });
-                backgroundAudio.play().catch(error => {
-                    console.error("Audio play failed:", error);
                 });
             } else {
                 entryVideo.pause();
@@ -465,6 +507,18 @@
         entryVideo.addEventListener('loadedmetadata', () => {
             entryVideo.currentTime = 0;
             entryVideo.pause();
+        });
+
+        // Audio error handling
+        backgroundAudio.addEventListener('error', (e) => {
+            console.error('Audio loading error:', e);
+            // Hide audio button if audio fails to load
+            audioToggle.style.display = 'none';
+        });
+
+        // Audio load success
+        backgroundAudio.addEventListener('canplaythrough', () => {
+            console.log('Audio loaded successfully');
         });
 
         // Countdown Timer Logic
