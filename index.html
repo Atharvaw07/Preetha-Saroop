@@ -411,9 +411,9 @@
         const volumeOff = document.getElementById('volume-off');
         const mainContent = document.getElementById('main-content');
 
-        // Audio toggle functionality
-        let isMuted = false;
-        audioToggle.addEventListener('click', (e) => {
+        // Audio toggle functionality - UPDATED TO USE PLAY/PAUSE
+        let isPlaying = false;
+        audioToggle.addEventListener('click', async (e) => {
             e.stopPropagation(); // Prevent triggering video play/pause
 
             // Make button temporarily prominent
@@ -424,28 +424,35 @@
                 audioToggle.style.opacity = '0.4';
             }, 2000);
 
-            isMuted = !isMuted;
-
-            if (isMuted) {
-                backgroundAudio.volume = 0;
-                volumeOn.classList.add('hidden');
-                volumeOff.classList.remove('hidden');
-            } else {
-                backgroundAudio.volume = 1;
-                volumeOn.classList.remove('hidden');
-                volumeOff.classList.add('hidden');
+            try {
+                if (isPlaying) {
+                    backgroundAudio.pause();
+                    volumeOn.classList.add('hidden');
+                    volumeOff.classList.remove('hidden');
+                    isPlaying = false;
+                } else {
+                    await backgroundAudio.play();
+                    volumeOn.classList.remove('hidden');
+                    volumeOff.classList.add('hidden');
+                    isPlaying = true;
+                }
+            } catch (error) {
+                console.error("Audio toggle failed:", error);
             }
         });
 
-        entryVideoGate.addEventListener('click', () => {
+        entryVideoGate.addEventListener('click', async () => {
             if (entryVideo.paused) {
                 // Start both video and audio
-                entryVideo.play().catch(error => {
-                    console.error("Video play failed:", error);
-                });
-                backgroundAudio.play().catch(error => {
-                    console.error("Audio play failed:", error);
-                });
+                try {
+                    await entryVideo.play();
+                    await backgroundAudio.play();
+                    isPlaying = true;
+                    volumeOn.classList.remove('hidden');
+                    volumeOff.classList.add('hidden');
+                } catch (error) {
+                    console.error("Media play failed:", error);
+                }
             } else {
                 entryVideo.pause();
                 // Audio continues playing - don't pause it
@@ -465,6 +472,19 @@
         entryVideo.addEventListener('loadedmetadata', () => {
             entryVideo.currentTime = 0;
             entryVideo.pause();
+        });
+
+        // Handle page visibility changes (pause audio when tab is hidden)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && isPlaying) {
+                backgroundAudio.pause();
+                // Keep isPlaying as true so it resumes when tab becomes visible
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            backgroundAudio.pause();
         });
 
         // Countdown Timer Logic
